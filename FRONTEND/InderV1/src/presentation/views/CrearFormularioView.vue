@@ -75,6 +75,30 @@
                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Tipo de Documento *</label>
+                    <select
+                      v-model="formData.tipoDocumentoId"
+                      required
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Seleccione un tipo de documento</option>
+                      <option v-for="tipoDoc in tiposDocumento" :key="tipoDoc.id" :value="tipoDoc.id">
+                        {{ tipoDoc.nombre }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Número de Documento *</label>
+                    <input
+                      v-model="formData.numeroDocumento"
+                      type="text"
+                      required
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -83,6 +107,33 @@
                 <h4 class="text-md font-medium text-gray-700 mb-4">Información Adicional</h4>
                 
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Género *</label>
+                    <select
+                      v-model="formData.generoId"
+                      required
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Seleccione un género</option>
+                      <option v-for="genero in generos" :key="genero.id" :value="genero.id">
+                        {{ genero.nombre }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Comuna</label>
+                    <select
+                      v-model="formData.comunaId"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                      <option value="">Seleccione una comuna</option>
+                      <option v-for="comuna in comunas" :key="comuna.idComuna" :value="comuna.idComuna">
+                        {{ comuna.nombreComuna }}
+                      </option>
+                    </select>
+                  </div>
+                  
                   <div>
                     <label class="block text-sm font-medium text-gray-700">Dirección</label>
                     <input
@@ -98,6 +149,33 @@
                       v-model="formData.fechaNacimiento"
                       type="date"
                       required
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Número de Personas</label>
+                    <input
+                      v-model="formData.numeroDePeronas"
+                      type="number"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700">Entidad</label>
+                    <input
+                      v-model="formData.entidad"
+                      type="text"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  
+                  <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Colegio</label>
+                    <input
+                      v-model="formData.colegio"
+                      type="text"
                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -168,12 +246,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFormularioStore } from '../../application/stores/formularioStore'
+import { useCatalogoStore } from '../../application/stores/catalogoStore'
 
 const router = useRouter()
 const formularioStore = useFormularioStore()
+const catalogoStore = useCatalogoStore()
 
 const formData = reactive({
   nombres: '',
@@ -182,15 +262,18 @@ const formData = reactive({
   direccion: '',
   celular: '',
   fechaNacimiento: '',
-  tipoDocumentoId: 1, // Valor por defecto
+  tipoDocumentoId: null, // Valor por defecto
   numeroDocumento: '',
-  generoId: 1, // Valor por defecto
+  generoId: null, // Valor por defecto
   comunaId: null,
   numeroDePeronas: null,
   entidad: '',
   colegio: ''
 })
 
+const tiposDocumento = ref([])
+const generos = ref([])
+const comunas = ref([])
 const isLoading = ref(false)
 const error = ref('')
 const success = ref(false)
@@ -202,7 +285,7 @@ const handleSubmit = async () => {
 
   try {
     // Validaciones básicas
-    if (!formData.nombres || !formData.apellidos || !formData.correo || !formData.celular || !formData.fechaNacimiento) {
+    if (!formData.nombres || !formData.apellidos || !formData.correo || !formData.celular || !formData.fechaNacimiento || !formData.tipoDocumentoId || !formData.numeroDocumento || !formData.generoId) {
       throw new Error('Por favor complete todos los campos obligatorios')
     }
 
@@ -212,7 +295,11 @@ const handleSubmit = async () => {
       throw new Error('Por favor ingrese un correo válido')
     }
 
-    await formularioStore.crearFormulario(formData)
+    // Convertir numeroDocumento a número
+    const formDataToSend = { ...formData }
+    formDataToSend.numeroDocumento = parseInt(formData.numeroDocumento)
+
+    await formularioStore.crearFormulario(formDataToSend)
     success.value = true
     
     // Redirigir después de 2 segundos
@@ -226,4 +313,16 @@ const handleSubmit = async () => {
     isLoading.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    await catalogoStore.cargarTodosLosCatalogos()
+    tiposDocumento.value = catalogoStore.tiposDocumento
+    generos.value = catalogoStore.generos
+    comunas.value = catalogoStore.comunas
+  } catch (err) {
+    console.error('Error cargando catálogos:', err)
+    error.value = 'Error al cargar los catálogos'
+  }
+})
 </script>
