@@ -7,6 +7,12 @@
       <p class="mt-2 text-center text-sm text-gray-600">
         Ingrese sus credenciales para continuar
       </p>
+      <!-- Mensaje de estado del sistema -->
+      <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <p class="text-center text-sm text-blue-700">
+          <strong>Estado:</strong> Conectando a API en https://localhost:7111
+        </p>
+      </div>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -46,7 +52,8 @@
             </div>
           </div>
 
-          <div v-if="error" class="rounded-md bg-red-50 p-4">
+          <!-- Mensajes de error mejorados -->
+          <div v-if="error" class="rounded-md bg-red-50 p-4 border border-red-200">
             <div class="flex">
               <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -55,8 +62,28 @@
               </div>
               <div class="ml-3">
                 <h3 class="text-sm font-medium text-red-800">
-                  {{ error }}
+                  Error de autenticación
                 </h3>
+                <div class="mt-2 text-sm text-red-700">
+                  <p>{{ error }}</p>
+                  <p class="mt-1 text-xs">Por favor, verifica tus credenciales e inténtalo nuevamente.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mensaje de éxito temporal -->
+          <div v-if="loginSuccess" class="rounded-md bg-green-50 p-4 border border-green-200">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">
+                  ¡Inicio de sesión exitoso! Redirigiendo...
+                </p>
               </div>
             </div>
           </div>
@@ -98,17 +125,31 @@ const credentials = ref({
 
 const error = ref('')
 const isLoading = ref(false)
+const loginSuccess = ref(false)
 
 const handleLogin = async () => {
   isLoading.value = true
   error.value = ''
+  loginSuccess.value = false
 
   try {
-    await authStore.login(credentials.value)
-    router.push('/dashboard')
+    // Mostrar mensaje de intento
+    console.log('.Intentando login con:', credentials.value.username)
+    
+    const result = await authStore.login(credentials.value)
+    
+    // Mostrar éxito
+    loginSuccess.value = true
+    console.log('Login exitoso para:', result.user?.username || 'usuario')
+    
+    // Esperar un momento para que el usuario vea el mensaje
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 1500)
+    
   } catch (err) {
-    error.value = err.message || 'Error de autenticación'
-  } finally {
+    console.error('Error en login:', err)
+    error.value = err.message || 'Error de autenticación. Por favor verifica tus credenciales.'
     isLoading.value = false
   }
 }

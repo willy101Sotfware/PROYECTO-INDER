@@ -5,16 +5,20 @@ import { User } from '../../core/entities/User'
 export class AuthRepository extends AuthRepositoryInterface {
   async login(credentials) {
     try {
+      console.log('Enviando solicitud de login a:', '/auth/login')
       const response = await httpService.post('/auth/login', credentials)
-      if (response.token) {
-        localStorage.setItem('token', response.token)
-        localStorage.setItem('user', JSON.stringify(response.user))
+      console.log('Respuesta del login:', response)
+      
+      if (!response.token) {
+        throw new Error('No se recibió token de autenticación')
       }
+      
       return {
         token: response.token,
         user: User.fromApiResponse(response.user)
       }
     } catch (error) {
+      console.error('Error en AuthRepository.login:', error)
       throw new Error(error.message || 'Error en el inicio de sesión')
     }
   }

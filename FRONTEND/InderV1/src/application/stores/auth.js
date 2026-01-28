@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { AuthRepository } from '../application/repositories/AuthRepository'
-import { LoginUseCase } from '../application/usecases/auth/LoginUseCase'
+import { AuthRepository } from '../../application/repositories/AuthRepository'
+import { LoginUseCase } from '../../application/usecases/auth/LoginUseCase'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -30,6 +30,10 @@ export const useAuthStore = defineStore('auth', {
         this.user = result.user
         this.error = null
         
+        // Guardar en localStorage
+        localStorage.setItem('token', result.token)
+        localStorage.setItem('user', JSON.stringify(result.user))
+        
         return result
       } catch (error) {
         this.error = error.message
@@ -48,6 +52,9 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.user = null
         this.token = null
+        // Limpiar localStorage
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
       }
     },
 
